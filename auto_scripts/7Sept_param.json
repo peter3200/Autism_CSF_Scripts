@@ -1,0 +1,106 @@
+{
+    "data": {
+        "BrainMask": "",
+        "CerebellumMask": "",
+        "SubjectVentricleMask": "",
+        "T1img": "T1FILE",
+        "T2img": "",
+        "TissueSeg": "",
+        "output_dir": "OUTDIR"
+    },
+    "executables": [
+        {
+            "name": "ABC_CLI",
+            "path": "/zhome/mpeter55/Downloads/Auto_EACSF-1.7.7-Linux/bin/ABC_CLI"
+        },
+        {
+            "name": "ANTS",
+            "path": "/zhome/mpeter55/Downloads/Auto_EACSF-1.7.7-Linux/bin/ANTS"
+        },
+        {
+            "name": "BRAINSFit",
+            "path": "/zhome/mpeter55/Downloads/Auto_EACSF-1.7.7-Linux/bin/BRAINSFit"
+        },
+        {
+            "name": "ImageMath",
+            "path": "/zhome/mpeter55/Downloads/Auto_EACSF-1.7.7-Linux/bin/ImageMath"
+        },
+        {
+            "name": "ImageStat",
+            "path": "/zhome/mpeter55/Downloads/Auto_EACSF-1.7.7-Linux/bin/ImageStat"
+        },
+        {
+            "name": "WarpImageMultiTransform",
+            "path": "/zhome/mpeter55/Downloads/Auto_EACSF-1.7.7-Linux/bin/WarpImageMultiTransform"
+        },
+        {
+            "name": "bet",
+            "path": "/fslhome/mpeter55/Downloads/FSL/bin/bet"
+        },
+        {
+            "name": "convertITKformats",
+            "path": "/zhome/mpeter55/Downloads/Auto_EACSF-1.7.7-Linux/bin/convertITKformats"
+        },
+        {
+            "name": "python3",
+            "path": "/fslhome/mpeter55/fsl_groups/fslg_autism_asym/software/anaconda3/bin/python3"
+        }
+    ],
+    "parameters": {
+        "ACPC_UNIT": "index",
+        "ACPC_VAL": 70,
+        "ANTS_T1_weight": 1,
+        "ANTS_gaussian_sig": 3,
+        "ANTS_iterations_val": "100x50x25",
+        "ANTS_reg_type": "GreedyDiffeo",
+        "ANTS_sim_metric": "CC",
+        "ANTS_sim_param": 4,
+        "ANTS_transformation_step": 0.25,
+        "COMPUTE_CSFDENS": false,
+        "CSFLabel": 3,
+        "LH_innerSurface": "",
+        "PERFORM_REG": true,
+        "PERFORM_SS": true,
+        "PERFORM_TSEG": true,
+        "PERFORM_VR": true,
+        "RH_innerSurface": "",
+        "USE_DCM": true,
+        "atlas_obj": {
+            "Colin27": {
+                "T1": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/Colin27_T1.nrrd",
+                "T2": null,
+                "brainmask": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/Colin27_brainmask.nrrd",
+                "selected": true
+            },
+            "IBIS": {
+                "T1": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/IBIS_T1.nrrd",
+                "T2": null,
+                "brainmask": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/IBIS_brainmask.nrrd",
+                "selected": true
+            },
+            "ICBM": {
+                "T1": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/ICBM_T1.nrrd",
+                "T2": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/ICBM_T2.nrrd",
+                "brainmask": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/ICBM_brainmask.nrrd",
+                "selected": true
+            },
+            "LargeCSF01": {
+                "T1": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/LargeCSF01_T1.nrrd",
+                "T2": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/LargeCSF01_T2.nrrd",
+                "brainmask": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/LargeCSF01_brainmask.nrrd",
+                "selected": true
+            },
+            "LargeCSF02": {
+                "T1": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/LargeCSF02_T1.nrrd",
+                "T2": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/LargeCSF02_T2.nrrd",
+                "brainmask": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1/LargeCSF02_brainmask.nrrd",
+                "selected": true
+            }
+        },
+        "registrationAtlas": "/zhome/mpeter55/Downloads/Atlases/pediatric-atlas-1year-T1-ABC/1year-Average-IBIS-MNI-t1w.nrrd",
+        "skullStrippingAtlasesDirectory": "/zhome/mpeter55/Downloads/Atlases/brainmaskingMultiatlas_part1",
+        "templateInvMaskVentricle": "/zhome/mpeter55/Downloads/Atlases/pediatric-atlas-1year-T1-ABC/DeepGray5Class_stripped/Vent_CSF-INVMask.nrrd",
+        "templateT1Ventricle": "/zhome/mpeter55/Downloads/Atlases/pediatric-atlas-1year-T1-ABC/DeepGray5Class_stripped/template.nrrd",
+        "tissueSegAtlasDirectory": "/zhome/mpeter55/Downloads/Atlases/pediatric-atlas-1year-T1-ABC/DeepGray5Class_stripped"
+    }
+}
