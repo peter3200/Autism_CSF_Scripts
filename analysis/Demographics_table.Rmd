@@ -1,0 +1,367 @@
+---
+title: "Demographics_table"
+author: "M Peterson"
+date: "11/11/2020"
+output: html_document
+---
+
+```{r}
+#Load packages
+library(mosaic)
+library(dplyr)
+library(reshape2)
+library(readxl)
+library(tidyverse)
+library(car)
+
+All_Data <- read.csv("C:/Users/maddy/Box/Autism_CSF/Utah_Longitudinal_Results/Raw_EACSF_Output/All_Data.csv", fill=TRUE)
+
+All_Data$int_5_4 <- (All_Data$AgeYrsT5 - All_Data$AgeYrsT4)
+All_Data$int_4_3 <- (All_Data$AgeYrsT4 - All_Data$AgeYearsT3)
+All_Data$int_3_2 <- (All_Data$AgeYearsT3 - All_Data$AgeYearsT2)
+All_Data$int_2_1 <- (All_Data$AgeYearsT2 - All_Data$AgeYearsT1)
+
+All_Data$avg_int <- rowMeans(All_Data[,36:39], na.rm=TRUE)
+
+#add the QC file
+QC <- read_excel("C:/Users/maddy/Box/Autism_CSF/Utah_Longitudinal_Results/QC/QC_All.xlsx")
+All_Data_QC <- merge(All_Data, QC, by ="SUBJID", all=TRUE)
+
+#transform data from wide to long
+data_long_QC <- reshape(All_Data_QC, direction='long', 
+                        varying=c('Time1_QC_Maddy_MID02', 'Time1_raw_CSF', 'AgeYearsT1', 'Time2_QC_Maddy_MID02', 'Time2_raw_CSF', 'AgeYearsT2', 'Time3_QC_Maddy_MID02', 'Time3_raw_CSF', 'AgeYearsT3', 'Time4_QC_Maddy_MID02', 'Time4_raw_CSF', 'AgeYrsT4', 'Time5_QC_Maddy_MID02', 'Time5_raw_CSF', 'AgeYrsT5'), 
+                        timevar='timepoint',
+                        times=c('Time1', 'Time2', 'Time3', 'Time4', 'Time5'),
+                        v.names=c('raw_CSF', 'Age', 'QC_Maddy_MID02'),
+                        idvar='SUBJID')
+
+#drop time points with 2 or 3 on MID02 QC
+data_long_QC_dropped<-data_long_QC[!(data_long_QC$QC_Maddy_MID02=="2" | data_long_QC$QC_Maddy_MID02=="3"),]
+data_long_QC_dropped<-subset(data_long_QC_dropped, AutismControl!="NA")
+View(data_long_QC_dropped)
+
+#Drop participants with incomplete or questionable information 
+data_long_QC_dropped<-subset(data_long_QC_dropped, SUBJID!=39031) #Subject has very large ventricles, listed as a control
+data_long_QC_dropped<-subset(data_long_QC_dropped, SUBJID!=59507) #No record of a scan
+data_long_QC_dropped<-subset(data_long_QC_dropped, SUBJID!=65548) #No record of a scan
+data_long_QC_dropped<-subset(data_long_QC_dropped, SUBJID!=91541) #No record of a scan
+data_long_QC_dropped<-subset(data_long_QC_dropped, SUBJID!=99995) #No record of a scan
+data_long_QC_dropped<-subset(data_long_QC_dropped, SUBJID!=63305) #Same person as 59544
+data_long_QC_dropped<-subset(data_long_QC_dropped, SUBJID!=88711) #Case study, not longitudinal scans.
+data_long_QC_dropped<-subset(data_long_QC_dropped, SUBJID!=89340) #Case study, not longitudinal scans
+
+
+FreesurferData <- read.csv("C:/Users/maddy/Box/Autism_CSF/FreesurferData_AllOutput_Ventricles.csv")
+
+#create uniform variable names in FS data
+FreesurferData$SUBJID <- gsub("^.{0,3}", "", FreesurferData$LabID)
+names(FreesurferData)[4] <- "timepoint"
+
+#merge FS and other datasets
+data_long_QC_dropped <- merge(FreesurferData, data_long_QC_dropped, by =c("SUBJID", "timepoint"), all=TRUE)
+
+
+#variables
+data_long_QC_dropped$time_bin[data_long_QC_dropped$timepoint=="Time1"] <- "0"
+data_long_QC_dropped$time_bin[data_long_QC_dropped$timepoint=="Time2"] <- "1"
+data_long_QC_dropped$time_bin[data_long_QC_dropped$timepoint=="Time3"] <- "1"
+data_long_QC_dropped$time_bin[data_long_QC_dropped$timepoint=="Time4"] <- "1"
+data_long_QC_dropped$time_bin[data_long_QC_dropped$timepoint=="Time5"] <- "1"
+data_long_QC_dropped$CSF_cm <- data_long_QC_dropped$raw_CSF/1000
+
+#Exclusion criteria
+data_long_QC_dropped <- subset(data_long_QC_dropped, Age<=43)
+data_long_QC_dropped<-subset(data_long_QC_dropped, AutismControl!="NA")
+data_long_QC_dropped<-subset(data_long_QC_dropped, Age!="NA")
+data_long_QC_dropped<-subset(data_long_QC_dropped, CSF_cm!="NA")
+data_long_QC_dropped$age_squared <- data_long_QC_dropped$Age*data_long_QC_dropped$Age
+data_long_QC_dropped$TotalBrain_Volume_cm <- data_long_QC_dropped$TotalBrain_Volume/1000
+
+#Drop "NA" for TBV in order to fit model
+#data_long_QC_dropped <- subset(data_long_QC_dropped, TotalBrain_Volume_cm!="NA")
+
+#reshape back to wide from long! 
+data_wide_all <- reshape(data_long_QC_dropped, 
+  timevar = "timepoint",
+  idvar = c("SUBJID", "sex", "AutismControl", "Group", "Mean_Age", "Participant", "avg_int"),
+  direction = "wide")
+
+
+
+#load wide dataset (238 participants)
+All_Data <- read.csv("C:/Users/maddy/Box/Autism_CSF/Utah_Longitudinal_Results/Raw_EACSF_Output/All_Data.csv", fill=TRUE)
+#variables
+All_Data<-subset(All_Data, AutismControl!="NA")
+All_Data<-subset(All_Data, AgeYearsT1 <= 45 | is.na(AgeYearsT1))
+All_Data<-subset(All_Data, AgeYearsT2 <= 45 | is.na(AgeYearsT2))
+All_Data<-subset(All_Data, AgeYearsT3 <= 45 | is.na(AgeYearsT3))
+All_Data<-subset(All_Data, AgeYrsT4 <= 45 | is.na(AgeYrsT4))
+All_Data<-subset(All_Data, AgeYrsT5 <= 45 | is.na(AgeYrsT5))
+
+
+All_Data$int_5_4 <- (All_Data$AgeYrsT5 - All_Data$AgeYrsT4)
+All_Data$int_4_3 <- (All_Data$AgeYrsT4 - All_Data$AgeYearsT3)
+All_Data$int_3_2 <- (All_Data$AgeYearsT3 - All_Data$AgeYearsT2)
+All_Data$int_2_1 <- (All_Data$AgeYearsT2 - All_Data$AgeYearsT1)
+
+All_Data$avg_int <- rowMeans(All_Data[,36:39], na.rm=TRUE)
+All_Data$avg_CSF <- rowMeans(All_Data[,3:7], na.rm=TRUE)
+All_Data<-subset(All_Data, avg_CSF!="NaN")
+All_Data<-subset(All_Data, Mean_Age!="NA")
+```
+
+```{r}
+
+#Overall demographics for Method section
+
+#Sex by diagnostic group
+table(data_wide_all$AutismControl, data_wide_all$sex)
+
+#Mean age by sex, Autism
+mean(Mean_Age~sex, data=subset(data_wide_all, AutismControl=="autism"))
+
+favstats(Mean_Age ~ sex, data=subset(data_wide_all, AutismControl=="autism"))
+
+
+favstats(Mean_Age ~ AutismControl, data=data_wide_all)
+
+#Mean age by sex, TD
+favstats(Mean_Age ~ sex, data=subset(data_wide_all, AutismControl=="control"))
+
+
+#Average age across all groups
+mean(data_wide_all$Mean_Age, na.rm = TRUE)
+#20.99 years
+
+#Average interscan interval across all groups
+mean(data_wide_all$avg_int, na.rm = TRUE)
+#3.16 years
+
+#Individuals per time point
+table(data_long$timepoint, data_long$AutismControl)
+
+
+#Number of individuals with each number of scan
+
+data_wide_all <- transform(data_wide_all,scan1=ifelse(!is.na(ScanDateT1.Time1),1, 0 ))
+data_wide_all <- transform(data_wide_all,scan2=ifelse(!is.na(ScanDateT2.Time2),1, 0 ))
+data_wide_all <- transform(data_wide_all,scan3=ifelse(!is.na(ScanDateT3.Time3),1, 0 ))
+data_wide_all <- transform(data_wide_all,scan4=ifelse(!is.na(ScanDateT4.Time4),1, 0 ))
+data_wide_all <- transform(data_wide_all,scan5=ifelse(!is.na(ScanDateT5.Time5),1, 0 ))
+
+data_wide_all$num_scans <- (data_wide_all$scan1 + data_wide_all$scan2 + data_wide_all$scan3 + data_wide_all$scan4 + data_wide_all$scan5)
+
+table(data_wide_all$num_scans, data_wide_all$AutismControl)
+
+ 
+
+#Get the true range for age for both groups (requires dplyr)
+#QC data
+data_wide_all %>%
+  group_by(AutismControl) %>%
+summarise(across(starts_with("Age.Time"), ~range(.x, na.rm = TRUE)))
+
+#get overall avg interscan int.
+mean(data_long_QC_dropped$avg_int, na.rm=TRUE) #3.19
+mean(data_wide_all$avg_int, na.rm=TRUE) #=3.162
+
+
+#Using long data
+
+#Total number of participants #N=243
+as.data.frame(table(data_long$SUBJID))
+
+#Total number of ASD participants #N=118 ASD, 125 TD
+data_long_asd<-subset(data_long, AutismControl!="control")
+as.data.frame(table(data_long_asd$SUBJID))
+
+
+
+```
+
+
+
+```{r}
+#Comparison 1: Age Independent Samples t-test
+t.test(Age ~ AutismControl, data = data_long_QC_dropped, mu = 0, alternative = "less", conf.level = 0.95)
+
+#Five number summary
+favstats(Age ~ AutismControl, data=data_long_QC_dropped)
+#Overall mean age
+mean(data_long_QC_dropped$Age, na.rm=TRUE)
+
+```
+
+
+```{r}
+#Comparison 2: Interscan interval
+
+#Independent t test
+t.test(avg_int ~ AutismControl, data = data_long_QC_dropped, mu = 0, alternative = "less", conf.level = 0.95)
+
+#Five number summary
+favstats(avg_int ~ AutismControl, data=data_long_QC_dropped)
+
+#Overall mean interscan interval
+favstats(data_long_QC_dropped$avg_int)
+  
+```
+
+
+
+```{r}
+#Comparison 3-5: IQ (Verbal, Performance, Full)
+
+#Load up IQ data
+IQ_all <- read_excel("C:/Users/maddy/Box/Autism_Longitudinal_Neuroimaging/Jared_BYU/UU_Lainhart_Data_June_2015_Times1to3/IQ_allTimes_20Apr15.xlsx")
+
+#Subset the data
+IQ_all.wide <- subset(IQ_all, select = c("LabID","PIQ", "VIQ", "FIQ", "TimePoint"))
+#grab the PIQ averages
+piq_avg_data<-aggregate(x = IQ_all.wide$PIQ,  # Specify  data column
+          by = list(IQ_all.wide$LabID),              # Specify group indicator
+          FUN = mean, na.rm=TRUE)  
+viq_avg_data<-aggregate(x = IQ_all.wide$VIQ,  # Specify  data column
+          by = list(IQ_all.wide$LabID),              # Specify group indicator
+          FUN = mean, na.rm=TRUE)
+IQ_all.wide$FIQ<-as.numeric(IQ_all.wide$FIQ)
+fiq_avg_data<-aggregate(x = IQ_all.wide$FIQ,  # Specify  data column
+          by = list(IQ_all.wide$LabID),              # Specify group indicator
+          FUN = mean, na.rm=TRUE)
+          
+          
+#rename Group.1 to SUBJID, merge with All_Data
+names(piq_avg_data)[1] <- "SUBJID"
+names(viq_avg_data)[1] <- "SUBJID"
+names(fiq_avg_data)[1] <- "SUBJID"
+names(piq_avg_data)[2] <- "piq_avg"
+names(viq_avg_data)[2] <- "viq_avg"
+names(fiq_avg_data)[2] <- "fiq_avg"
+ 
+data_QC_IQ <- merge(data_wide_all, piq_avg_data, by ="SUBJID", all=TRUE)
+data_QC_IQ <- merge(data_QC_IQ, fiq_avg_data, by ="SUBJID", all=TRUE)
+data_QC_IQ <- merge(data_QC_IQ, viq_avg_data, by ="SUBJID", all=TRUE)
+
+#Exclusion criteria
+data_QC_IQ<-subset(data_QC_IQ, AutismControl!="NA")
+
+#Drop participants with incomplete or questionable information 
+data_QC_IQ<-subset(data_QC_IQ, SUBJID!=39031) #Subject has very large ventricles, listed as a control
+data_QC_IQ<-subset(data_QC_IQ, SUBJID!=59507) #No record of a scan
+data_QC_IQ<-subset(data_QC_IQ, SUBJID!=65548) #No record of a scan
+data_QC_IQ<-subset(data_QC_IQ, SUBJID!=91541) #No record of a scan
+data_QC_IQ<-subset(data_QC_IQ, SUBJID!=99995) #No record of a scan
+data_QC_IQ<-subset(data_QC_IQ, SUBJID!=63305) #Same person as 59544
+data_QC_IQ<-subset(data_QC_IQ, SUBJID!=88711) #Case study, not longitudinal scans.
+data_QC_IQ<-subset(data_QC_IQ, SUBJID!=89340) #Case study, not longitudinal scans
+
+
+#PIQ
+#Independent t test
+t.test(piq_avg ~ AutismControl, data = data_QC_IQ, mu = 0, alternative = "less", conf.level = 0.95, na.rm=TRUE)
+#Five number summary
+favstats(piq_avg ~ AutismControl, data = data_QC_IQ)
+
+
+#VIQ
+#Independent t test
+t.test(viq_avg ~ AutismControl, data = data_QC_IQ, mu = 0, alternative = "less", conf.level = 0.95, na.rm=TRUE)
+#Five number summary
+favstats(viq_avg ~ AutismControl, data = data_QC_IQ)
+
+
+#FIQ
+#Independent t test
+t.test(fiq_avg ~ AutismControl, data = data_QC_IQ, mu = 0, alternative = "less", conf.level = 0.95, na.rm=TRUE)
+#Five number summary
+favstats(fiq_avg ~ AutismControl, data = data_QC_IQ)#FIQ
+
+```
+
+
+
+```{r}
+#Comparisons 6-8: ADOS
+
+#Load data
+ADOS_long <- read_excel("C:/Users/maddy/Box/Autism_CSF/code/Longitudinal_Study_Graphs&Analysis/data/ADOS_long.xlsx")
+
+#Take mean of ADOS components
+comm_avg_data<-aggregate(x = ADOS_long$ComminicationAlgorithmTotalEquivalentMods34,  # Specify  data column
+          by = list(ADOS_long$SUBJID),              # Specify group indicator
+          FUN = mean, na.rm=TRUE)  
+
+social_avg_data<-aggregate(x = ADOS_long$SocialAlgorithmTotalEquivalentMods34,  # Specify  data column
+          by = list(ADOS_long$SUBJID),              # Specify group indicator
+          FUN = mean, na.rm=TRUE)  
+
+total_avg_data<-aggregate(x = ADOS_long$Total_34,  # Specify  data column
+          by = list(ADOS_long$SUBJID),              # Specify group indicator
+          FUN = mean, na.rm=TRUE)  
+
+#Rename Group.1 to SUBJID, merge with All_Data
+names(comm_avg_data)[1] <- "SUBJID"
+names(social_avg_data)[1] <- "SUBJID"
+names(total_avg_data)[1] <- "SUBJID"
+names(comm_avg_data)[2] <- "comm_avg"
+names(social_avg_data)[2] <- "social_avg"
+names(total_avg_data)[2] <- "total_avg"
+ 
+data_QC_ADOS <- merge(data_wide_all, comm_avg_data, by ="SUBJID", all=TRUE)
+data_QC_ADOS <- merge(data_QC_ADOS, social_avg_data, by ="SUBJID", all=TRUE)
+data_QC_ADOS <- merge(data_QC_ADOS, total_avg_data, by ="SUBJID", all=TRUE)
+
+#Exclusion criteria
+data_QC_ADOS<-subset(data_QC_ADOS, AutismControl!="NA")
+
+#comm
+#Independent t test
+t.test(comm_avg ~ AutismControl, data = data_QC_ADOS, mu = 0, alternative = "greater", conf.level = 0.95, na.rm=TRUE)
+#Five number summary
+favstats(comm_avg ~ AutismControl, data = data_QC_ADOS)
+
+
+#social
+#Independent t test
+t.test(social_avg ~ AutismControl, data = data_QC_ADOS, mu = 0, alternative = "greater", conf.level = 0.95, na.rm=TRUE)
+#Five number summary
+favstats(social_avg ~ AutismControl, data = data_QC_ADOS)
+
+
+#total
+#Independent t test
+t.test(total_avg ~ AutismControl, data = data_QC_ADOS, mu = 0, alternative = "greater", conf.level = 0.95, na.rm=TRUE)
+#Five number summary
+favstats(total_avg ~ AutismControl, data = data_QC_ADOS)
+
+```
+
+
+```{r} 
+#Comparison #6 Autism Severity Scores
+
+#load data
+ADOS_long <- read_excel("C:/Users/maddy/Box/Autism_CSF/data/ADOSADI.xlsx")
+names(ADOS_long)[1] <- "SUBJID"
+#merge with other wide data
+data_wide_all <- merge(ADOS_long, data_wide_all, by =c("SUBJID"), all=TRUE)
+
+
+#Five number summary _ ADOS at Entry
+favstats(ADOS_CSS.Entry ~ AutismControl, data = data_wide_all)
+
+#Five number summary _ ADOS at Time5
+favstats(ADOS_Total_CSS_T5 ~ AutismControl, data = data_wide_all)
+
+#Five number summary _ ADI-R
+favstats(ADI_revised ~ AutismControl, data = data_wide_all)
+
+```
+
+
+
+
+
+
+
+
