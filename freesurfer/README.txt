@@ -1,4 +1,4 @@
-#This is the README file for scripts used to employ FreeSurfer
+#This is the README file for scripts used to employ FreeSurfer (used in an intial test-retest analysis of ventricular volume with 28 HCP scans).
 
 #Contents
 #1. freesurfer_batch.sh This is an all-purpose wrapper script used to submit FreeSurfer jobs using sbatch to a SLURM system. 
@@ -10,3 +10,4 @@
 #For instructions on running FreeSurfer's longitudinal pipeline, please see their documentation: https://surfer.nmr.mgh.harvard.edu/fswiki/LongitudinalProcessing 
 
 
+# Note: Freesurfer values for total brain volume and cortical thickness (as described in the paper) were derived using the cross-sectional Freesurfer pipeline.
