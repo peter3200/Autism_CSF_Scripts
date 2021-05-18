@@ -10,4 +10,4 @@
 #For instructions on running FreeSurfer's longitudinal pipeline, please see their documentation: https://surfer.nmr.mgh.harvard.edu/fswiki/LongitudinalProcessing 
 
 
-# Note: Freesurfer values for total brain volume and cortical thickness (as described in the paper) were derived using the cross-sectional Freesurfer pipeline.
+# Note: Freesurfer values for total brain volume and cortical thickness (as described in Peterson et al.) were derived using the cross-sectional Freesurfer pipeline. See the cross_sectional folder for those scripts.
