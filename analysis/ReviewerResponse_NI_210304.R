@@ -37,12 +37,11 @@ All_Data_QC <- merge(All_Data_QC, ADOS2, by =c("SUBJID"), all=TRUE)
 
 
 #merge in IQ data 
-Load up IQ data
 IQ_all <- read_excel("C:/Users/maddy/Box/Autism_CSF/data/IQ_Times15_210506.xlsx")
 IQ_all <- subset(IQ_all, TimePoint!="No Time 5 IQ")
 
 #Subset the data
-#IQ_all.wide <- subset(IQ_all, select = c("LabID","PIQ", "VIQ", "FIQ", "TimePoint"))
+IQ_all.wide <- subset(IQ_all, select = c("LabID","PIQ", "VIQ", "FIQ", "TimePoint"))
 #grab the IQ averages
 #piq_avg_data<-aggregate(x = IQ_all.wide$PIQ,  # Specify  data column
 #                        by = list(IQ_all.wide$LabID),              # Specify group indicator
@@ -50,19 +49,19 @@ IQ_all <- subset(IQ_all, TimePoint!="No Time 5 IQ")
 #viq_avg_data<-aggregate(x = IQ_all.wide$VIQ,  # Specify  data column
 #                        by = list(IQ_all.wide$LabID),              # Specify group indicator
 #                        FUN = mean, na.rm=TRUE)
-#IQ_all.wide$FIQ<-as.numeric(IQ_all.wide$FIQ)
-#fiq_avg_data<-aggregate(x = IQ_all.wide$FIQ,  # Specify  data column
-#                        by = list(IQ_all.wide$LabID),              # Specify group indicator
-#                        FUN = mean, na.rm=TRUE)
+IQ_all.wide$FIQ<-as.numeric(IQ_all.wide$FIQ)
+fiq_avg_data<-aggregate(x = IQ_all.wide$FIQ,  # Specify  data column
+                        by = list(IQ_all.wide$LabID),              # Specify group indicator
+                        FUN = mean, na.rm=TRUE)
 #rename Group.1 to SUBJID, merge with All_Data
 #names(piq_avg_data)[1] <- "SUBJID"
 #names(viq_avg_data)[1] <- "SUBJID"
-#names(fiq_avg_data)[1] <- "SUBJID"
+names(fiq_avg_data)[1] <- "SUBJID"
 #names(piq_avg_data)[2] <- "piq_avg"
 #names(viq_avg_data)[2] <- "viq_avg"
-#names(fiq_avg_data)[2] <- "fiq_avg"
+names(fiq_avg_data)[2] <- "fiq_avg"
 #All_Data_QC <- merge(All_Data_QC, piq_avg_data, by ="SUBJID", all=TRUE)
-#All_Data_QC <- merge(All_Data_QC, fiq_avg_data, by ="SUBJID", all=TRUE)
+All_Data_QC <- merge(All_Data_QC, fiq_avg_data, by ="SUBJID", all=TRUE)
 #All_Data_QC <- merge(All_Data_QC, viq_avg_data, by ="SUBJID", all=TRUE)
 
 All_Data_QC <- transform(All_Data_QC,scan1=ifelse(!is.na(ScanDateT1),1, 0 ))
@@ -224,9 +223,6 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     m.data1 <- match.data(m.out, drop.unmatched = TRUE)
 
   #run multilevel model 
-    fitmatch = lme(CSF_cm~AutismControl + age_mc + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin+ age_squared_mc + age_cubed_mc+ AutismControl*age_cubed_mc+ AutismControl*age_mc + age_squared_mc*AutismControl, 
-           random=~1+age_mc|SUBJID,data= m.data1, method="ML")
-    summary(fitmatch)
     #REML
     fitmatch2 = lme(CSF_cm~AutismControl + age_mc + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin+ age_squared_mc +age_cubed_mc+ AutismControl*age_cubed_mc+ AutismControl*age_mc + age_squared_mc*AutismControl, 
                    random=~1+age_mc|SUBJID,data= m.data1, method="REML")
@@ -240,7 +236,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
       #plot age by CSF
       ggplot(m.data1, aes(x=Age, y=CSF_cm, color=AutismControl))+
         geom_line(aes(group=Participant))+
-        labs(x = "Age (Years)", y = 'EA-CSF Volume ('~cm^3*')')+
+        labs(x = "Age (Years)", y = 'Extra-axial CSF Volume (' ~cm^3*')')+
         labs(fill = " ")+
         labs(color = " ")+
         scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -258,8 +254,8 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
           legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
           axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
 
-      #ggsave(filename = paste("Rev1.1_210513.svg"), width = 3.4, height = 3.4,
-      #   path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      #ggsave(filename = paste("Rev1.1_210521.svg"), width = 3.4, height = 3.4,
+       #  path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
       
       
   # Did the matching reduce the age gap between groups?
@@ -277,37 +273,6 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
   summary(fitC)
 
   
-#Models with age re-centered  
-  #This model has age recentered at 10
-  data_long_QC_dropped$Age10<- data_long_QC_dropped$Age - 10 
-  data_long_QC_dropped$age_squared10<-data_long_QC_dropped$Age10 * data_long_QC_dropped$Age10
-  data_long_QC_dropped$age_cubed10<-data_long_QC_dropped$age_squared10 * data_long_QC_dropped$Age10
-  
-  fit_age10=lme(CSF_cm~AutismControl + Age10 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared10 + age_cubed10 + AutismControl*age_cubed10 +AutismControl*Age10 + AutismControl*age_squared10,random=~1+Age10|SUBJID,
-                data=data_long_QC_dropped,method="REML", na.action=na.omit)
-  summary(fit_age10)
-  
-  #This model has age recentered at 20
-  data_long_QC_dropped$Age20<- data_long_QC_dropped$Age - 20
-  data_long_QC_dropped$age_squared20<-data_long_QC_dropped$Age20 * data_long_QC_dropped$Age20
-  data_long_QC_dropped$age_cubed20<-data_long_QC_dropped$age_squared20 * data_long_QC_dropped$Age20
-  
-  fit_age20=lme(CSF_cm~AutismControl + Age20 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared20 +age_cubed20 + AutismControl*age_cubed20+ AutismControl*Age20 + AutismControl*age_squared20,random=~1+Age20|SUBJID,
-                data=data_long_QC_dropped,method="REML", na.action=na.omit)
-  summary(fit_age20)
-  
-  
-  #This model has age recentered at 30
-  data_long_QC_dropped$Age30<- data_long_QC_dropped$Age - 30
-  data_long_QC_dropped$age_squared30<-data_long_QC_dropped$Age30 * data_long_QC_dropped$Age30
-  data_long_QC_dropped$age_cubed30<-data_long_QC_dropped$age_squared30 * data_long_QC_dropped$Age30
-  
-  fit_age30=lme(CSF_cm~AutismControl + Age30 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared30 + age_cubed30 + age_cubed30*AutismControl + AutismControl*Age30 + AutismControl*age_squared30,random=~1+Age30|SUBJID,
-                data=data_long_QC_dropped,method="REML", na.action=na.omit)
-  summary(fit_age30)
-  
-  
-
 
 
 #Attrition analysis: did the clinical severity of the autistic individual preclude their ability to return?
@@ -362,16 +327,45 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     
     
 #Is this is a study of ASD individuals who are merely 'high functioning'? 
-    #Subset dataset to only include participants with IQ score
-    data_long_QC_dropped_FIQ<-subset(data_long_QC_dropped, fiq_avg!="NA") 
-    data_long_QC_dropped_FIQ<-subset(data_long_QC_dropped_FIQ, fiq_avg!="NaN")
-    data_long_QC_dropped_FIQ<-subset(data_long_QC_dropped_FIQ, AutismControl!="Na")
-    data_long_QC_dropped_FIQ<-subset(data_long_QC_dropped_FIQ, sex!="2")
-    #Number of scans from LVCP versus HVCP individuals
-    table(data_long_QC_dropped_FIQ$AutismControl, data_long_QC_dropped_FIQ$fiq_avg<=79)
-    data_long_QC_LVCP <- subset(data_long_QC_dropped, fiq_avg <=79)
-    #Number of individuals from each group in LVCP camp
-    table(data_long_QC_LVCP$SUBJID, data_long_QC_LVCP$AutismControl)
+    #Subset dataset to only include participants with avg FIQ score
+    which( colnames(data_wide_all)=="FIQ.Time1" )
+    which( colnames(data_wide_all)=="FIQ.Time2" )
+    which( colnames(data_wide_all)=="FIQ.Time3" )
+    which( colnames(data_wide_all)=="FIQ.Time4" )
+    which( colnames(data_wide_all)=="FIQ.Time5" )
+    data_wide_all$FIQ.Time1 <- as.numeric(data_wide_all$FIQ.Time1)
+    data_wide_all$FIQ.Time2 <- as.numeric(data_wide_all$FIQ.Time2)
+    data_wide_all$FIQ.Time3 <- as.numeric(data_wide_all$FIQ.Time3)
+    data_wide_all$FIQ.Time4 <- as.numeric(data_wide_all$FIQ.Time4)
+    data_wide_all$FIQ.Time5 <- as.numeric(data_wide_all$FIQ.Time5)
+    data_wide_all$fiq_avg <- rowMeans(data_wide_all[,c(261,663,395,529,127)], na.rm=TRUE)
+    
+    data_wide_all_FIQ <- subset(data_wide_all, fiq_avg!="NA")
+    data_wide_all_FIQ$fiq_avg <- as.numeric(data_wide_all_FIQ$fiq_avg)
+    data_wide_all_FIQ$LVCP <- ifelse(data_wide_all_FIQ$fiq_avg <= 79, "1", "0")
+    #Number of participants with LVCP/HVCP
+    table(data_wide_all_FIQ$LVCP, data_wide_all_FIQ$AutismControl)
+    #Number of scans for LVCP and HVCP individuals
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan1=ifelse(!is.na(ScanDateT1.Time1),1, 0 ))
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan2=ifelse(!is.na(ScanDateT2.Time2),1, 0 ))
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan3=ifelse(!is.na(ScanDateT3.Time3),1, 0 ))
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan4=ifelse(!is.na(ScanDateT4.Time4),1, 0 ))
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan5=ifelse(!is.na(ScanDateT5.Time5),1, 0 ))
+    data_wide_all_FIQ$num_scans <- (data_wide_all_FIQ$scan1 + data_wide_all_FIQ$scan2 + data_wide_all_FIQ$scan3 + data_wide_all_FIQ$scan4 + data_wide_all_FIQ$scan5)
+    data_wide_all_LVCP <- subset(data_wide_all_FIQ, LVCP=="1")
+    data_wide_all_LVCP_ASD <- subset(data_wide_all_LVCP, AutismControl=="autism")
+    data_wide_all_LVCP_TD <- subset(data_wide_all_LVCP, AutismControl=="control")
+    #LVCP #s
+    sum(data_wide_all_LVCP_ASD$num_scans)  
+    sum(data_wide_all_LVCP_TD$num_scans)
+    
+    data_wide_all_HVCP <- subset(data_wide_all_FIQ, LVCP=="0")
+    data_wide_all_HVCP_ASD <- subset(data_wide_all_HVCP, AutismControl=="autism")
+    data_wide_all_HVCP_TD <- subset(data_wide_all_HVCP, AutismControl=="control")
+    #HVCP #s
+    sum(data_wide_all_HVCP_ASD$num_scans)  
+    sum(data_wide_all_HVCP_TD$num_scans)
+    
     
     
     #Distributions of FIQ-avg scores   
@@ -555,24 +549,24 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     
 #Is there a difference in IQ between those who did or did not have ADOS?
     #Create vars
-    data_wide_all$ados_dummy <- ifelse(is.na(data_wide_all$ADOS_comb.Time1) & is.na(data_wide_all$ADOS_comb.Time2) & is.na(data_wide_all$ADOS_comb.Time3) & is.na(data_wide_all$ADOS_comb.Time4) & is.na(data_wide_all$ADOS_comb.Time5), "0", "1")
-    table(data_wide_all$ados_dummy)
+    #data_wide_all$ados_dummy <- ifelse(is.na(data_wide_all$ADOS_comb.Time1) & is.na(data_wide_all$ADOS_comb.Time2) & is.na(data_wide_all$ADOS_comb.Time3) & is.na(data_wide_all$ADOS_comb.Time4) & is.na(data_wide_all$ADOS_comb.Time5), "0", "1")
+    #table(data_wide_all$ados_dummy)
     
-    which( colnames(data_wide_all)=="FIQ.Time1" )
-    which( colnames(data_wide_all)=="FIQ.Time2" )
-    which( colnames(data_wide_all)=="FIQ.Time3" )
-    which( colnames(data_wide_all)=="FIQ.Time4" )
-    which( colnames(data_wide_all)=="FIQ.Time5" )
-    data_wide_all$FIQ.Time1 <- as.numeric(data_wide_all$FIQ.Time1)
-    data_wide_all$FIQ.Time2 <- as.numeric(data_wide_all$FIQ.Time2)
-    data_wide_all$FIQ.Time3 <- as.numeric(data_wide_all$FIQ.Time3)
-    data_wide_all$FIQ.Time4 <- as.numeric(data_wide_all$FIQ.Time4)
-    data_wide_all$FIQ.Time5 <- as.numeric(data_wide_all$FIQ.Time5)
-    data_wide_all$fiq_avg <- rowMeans(data_wide_all[,c(259,658,392,525,126)], na.rm=TRUE)
-    favstats(data_wide_all$fiq_avg)  
+    #which( colnames(data_wide_all)=="FIQ.Time1" )
+    #which( colnames(data_wide_all)=="FIQ.Time2" )
+    #which( colnames(data_wide_all)=="FIQ.Time3" )
+    #which( colnames(data_wide_all)=="FIQ.Time4" )
+    #which( colnames(data_wide_all)=="FIQ.Time5" )
+    #data_wide_all$FIQ.Time1 <- as.numeric(data_wide_all$FIQ.Time1)
+    #data_wide_all$FIQ.Time2 <- as.numeric(data_wide_all$FIQ.Time2)
+    #data_wide_all$FIQ.Time3 <- as.numeric(data_wide_all$FIQ.Time3)
+    #data_wide_all$FIQ.Time4 <- as.numeric(data_wide_all$FIQ.Time4)
+    #data_wide_all$FIQ.Time5 <- as.numeric(data_wide_all$FIQ.Time5)
+    #data_wide_all$fiq_avg <- rowMeans(data_wide_all[,c(259,658,392,525,126)], na.rm=TRUE)
+    #favstats(data_wide_all$fiq_avg)  
       
     #Compare avg. FIQ with two-sided t-test
-    t.test(fiq_avg ~ ados_dummy, data = data_wide_all, mu = 0, alternative = "two.sided", conf.level = 0.95)
+    #t.test(fiq_avg ~ ados_dummy, data = data_wide_all, mu = 0, alternative = "two.sided", conf.level = 0.95)
     
     
     
@@ -635,7 +629,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     #plot age by CSF
     ggplot(data_long_QC_dropped_bin1, aes(x=Age, y=CSF_cm, color=AutismControl))+
       geom_line(aes(color = AutismControl, group = SUBJID))+
-      labs(x = "Age (Years)", y = 'EA-CSF Volume ('~cm^3*') for Times 2-5')+
+      labs(x = "Age (Years)", y = 'Extra-axial CSF Volume ( '~cm^3*') for Times 2-5')+
       geom_point(aes(fill=AutismControl), colour="black", pch=21, cex=1)+
       labs(fill = " ")+
       labs(color = " ")+
@@ -653,7 +647,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
             legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
             axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
     
-    #ggsave(filename = paste("Rev1.3_210513.svg"), width = 3.4, height = 3.4,
+    #ggsave(filename = paste("Rev1.3_210521.svg"), width = 3.4, height = 3.4,
     #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
     
     
@@ -694,54 +688,54 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     summary(fitADOS) 
     
   # EA-CSF by ADOS CSS Corr using scans from the time when CSS scores were collected
-    data_wide_all <- transform(data_wide_all,scan1=ifelse(!is.na(ScanDateT1.Time1),1, 0 ))
-    data_wide_all <- transform(data_wide_all,scan2=ifelse(!is.na(ScanDateT2.Time2),1, 0 ))
-    data_wide_all <- transform(data_wide_all,scan3=ifelse(!is.na(ScanDateT3.Time3),1, 0 ))
-    data_wide_all <- transform(data_wide_all,scan4=ifelse(!is.na(ScanDateT4.Time4),1, 0 ))
-    data_wide_all <- transform(data_wide_all,scan5=ifelse(!is.na(ScanDateT5.Time5),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan1=ifelse(!is.na(ScanDateT1.Time1),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan2=ifelse(!is.na(ScanDateT2.Time2),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan3=ifelse(!is.na(ScanDateT3.Time3),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan4=ifelse(!is.na(ScanDateT4.Time4),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan5=ifelse(!is.na(ScanDateT5.Time5),1, 0 ))
     
-    data_wide_all$num_scans <- (data_wide_all$scan1 + data_wide_all$scan2 + data_wide_all$scan3 + data_wide_all$scan4 + data_wide_all$scan5)
-    table(data_wide_all$num_scans, data_wide_all$AutismControl)
+    #data_wide_all$num_scans <- (data_wide_all$scan1 + data_wide_all$scan2 + data_wide_all$scan3 + data_wide_all$scan4 + data_wide_all$scan5)
+    #table(data_wide_all$num_scans, data_wide_all$AutismControl)
     
     #Set up if/else function
-    data_wide_all$new_time1 <- ifelse(data_wide_all$scan1=="1", 1, "")
-    data_wide_all$new_time2 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="1", 2, "")
-    data_wide_all$new_time3 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="1", 3, "")        
-    data_wide_all$new_time4 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="0" & data_wide_all$scan4=="1", 4, "")
-    data_wide_all$new_time5 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="0" & data_wide_all$scan4=="0" & data_wide_all$scan5=="1", 5, "")
+    #data_wide_all$new_time1 <- ifelse(data_wide_all$scan1=="1", 1, "")
+    #data_wide_all$new_time2 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="1", 2, "")
+    #data_wide_all$new_time3 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="1", 3, "")        
+    #data_wide_all$new_time4 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="0" & data_wide_all$scan4=="1", 4, "")
+    #data_wide_all$new_time5 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="0" & data_wide_all$scan4=="0" & data_wide_all$scan5=="1", 5, "")
    
     #concatenate new_time vars
-    data_wide_all$time_entry <- (paste0(data_wide_all$new_time1, data_wide_all$new_time2, data_wide_all$new_time3, data_wide_all$new_time4, data_wide_all$new_time5))
-    table(data_wide_all$time_entry)
+    #data_wide_all$time_entry <- (paste0(data_wide_all$new_time1, data_wide_all$new_time2, data_wide_all$new_time3, data_wide_all$new_time4, data_wide_all$new_time5))
+    #table(data_wide_all$time_entry)
     
     #set entry scan to time5 if time5 ADOS was used
-    ADOS_long <- read.csv("C:/Users/maddy/Box/Autism_CSF/data/UofU_Longitudinal_ADOS_CSS_210428.csv") 
-    names(ADOS_long)[1] <- "SUBJID"
+    #ADOS_long <- read.csv("C:/Users/maddy/Box/Autism_CSF/data/UofU_Longitudinal_ADOS_CSS_210428.csv") 
+    #names(ADOS_long)[1] <- "SUBJID"
     #merge with other wide data
-    data_wide_all_ADOS <- merge(ADOS_long, data_wide_all, by =c("SUBJID"), all=FALSE)
-    data_wide_all_ADOS <- subset(data_wide_all_ADOS, sex!=2)
-    data_wide_all_ADOS$ADOS_comb <- ifelse(is.na(data_wide_all_ADOS$TOTAL.CSS) & data_wide_all_ADOS$Time5ADOS.TOTAL.CSS!="NA", data_wide_all_ADOS$Time5ADOS.TOTAL.CSS, data_wide_all_ADOS$TOTAL.CSS)
+    #data_wide_all_ADOS <- merge(ADOS_long, data_wide_all, by =c("SUBJID"), all=FALSE)
+    #data_wide_all_ADOS <- subset(data_wide_all_ADOS, sex!=2)
+    #data_wide_all_ADOS$ADOS_comb <- ifelse(is.na(data_wide_all_ADOS$TOTAL.CSS) & data_wide_all_ADOS$Time5ADOS.TOTAL.CSS!="NA", data_wide_all_ADOS$Time5ADOS.TOTAL.CSS, data_wide_all_ADOS$TOTAL.CSS)
     
-    data_wide_all_ADOS$time_entry <- ifelse(is.na(data_wide_all_ADOS$TOTAL.CSS), "5", data_wide_all_ADOS$time_entry)
-    table(data_wide_all_ADOS$time_entry)
+    #data_wide_all_ADOS$time_entry <- ifelse(is.na(data_wide_all_ADOS$TOTAL.CSS), "5", data_wide_all_ADOS$time_entry)
+    #table(data_wide_all_ADOS$time_entry)
     
     #Entry_CSF
-    data_wide_all_ADOS$entry_CSF <- NA
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="1", data_wide_all_ADOS$CSF_cm.Time1, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="2", data_wide_all_ADOS$CSF_cm.Time2, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="3", data_wide_all_ADOS$CSF_cm.Time3, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="4", data_wide_all_ADOS$CSF_cm.Time4, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="5", data_wide_all_ADOS$CSF_cm.Time5, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS <- subset(data_wide_all_ADOS, entry_CSF!="NA")
-    data_wide_all_ADOS <- subset(data_wide_all_ADOS, ADOS_comb!="NA")
+    #data_wide_all_ADOS$entry_CSF <- NA
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="1", data_wide_all_ADOS$CSF_cm.Time1, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="2", data_wide_all_ADOS$CSF_cm.Time2, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="3", data_wide_all_ADOS$CSF_cm.Time3, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="4", data_wide_all_ADOS$CSF_cm.Time4, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="5", data_wide_all_ADOS$CSF_cm.Time5, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS <- subset(data_wide_all_ADOS, entry_CSF!="NA")
+    #data_wide_all_ADOS <- subset(data_wide_all_ADOS, ADOS_comb!="NA")
     
     #Correlation
-    cor.test(data_wide_all_ADOS$entry_CSF, data_wide_all_ADOS$ADOS_comb)
+    #cor.test(data_wide_all_ADOS$entry_CSF, data_wide_all_ADOS$ADOS_comb)
         
     
     
     
-#Subgroups
+#Subgroups -Attempt
   #Run model and generate predicted values
     fitC <- lme(CSF_cm~AutismControl + age_mc + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin+ age_squared_mc +age_cubed_mc + age_cubed_mc*AutismControl + AutismControl*age_mc + age_squared_mc*AutismControl, 
                 random=~1+age_mc|SUBJID,data= data_long_QC_dropped, method="ML")
@@ -885,44 +879,34 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
 
 # Given the wide age range, were the results the same across different age bins  (late childhood, adolescence, young adulthood, middle adulthood)?
     
-    #This model has age re-centered at 5
-    data_long_QC_dropped$Age5<- data_long_QC_dropped$Age - 5  
-    data_long_QC_dropped$age_squared5<-data_long_QC_dropped$Age5 * data_long_QC_dropped$Age5
-    data_long_QC_dropped$age_cubed5<-data_long_QC_dropped$age_squared5 * data_long_QC_dropped$Age5
+    #Models with age re-centered  
+    #This model has age recentered at 10
+    data_long_QC_dropped$Age10<- data_long_QC_dropped$Age - 10 
+    data_long_QC_dropped$age_squared10<-data_long_QC_dropped$Age10 * data_long_QC_dropped$Age10
+    data_long_QC_dropped$age_cubed10<-data_long_QC_dropped$age_squared10 * data_long_QC_dropped$Age10
     
-    fit_age5=lme(CSF_cm~AutismControl + Age5 + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin + age_squared5 + age_cubed5 + age_cubed5*AutismControl + AutismControl*Age5 + AutismControl*age_squared5,random=~1+Age5|SUBJID,
+    fit_age10=lme(CSF_cm~AutismControl + Age10 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared10 + age_cubed10 + AutismControl*age_cubed10 +AutismControl*Age10 + AutismControl*age_squared10,random=~1+Age10|SUBJID,
                   data=data_long_QC_dropped,method="REML", na.action=na.omit)
-    summary(fit_age5)
+    summary(fit_age10)
+    
+    #This model has age recentered at 20
+    data_long_QC_dropped$Age20<- data_long_QC_dropped$Age - 20
+    data_long_QC_dropped$age_squared20<-data_long_QC_dropped$Age20 * data_long_QC_dropped$Age20
+    data_long_QC_dropped$age_cubed20<-data_long_QC_dropped$age_squared20 * data_long_QC_dropped$Age20
+    
+    fit_age20=lme(CSF_cm~AutismControl + Age20 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared20 +age_cubed20 + AutismControl*age_cubed20+ AutismControl*Age20 + AutismControl*age_squared20,random=~1+Age20|SUBJID,
+                  data=data_long_QC_dropped,method="REML", na.action=na.omit)
+    summary(fit_age20)
     
     
-    #This model has age re-centered at 15
-    data_long_QC_dropped$Age15<- data_long_QC_dropped$Age - 15
-    data_long_QC_dropped$age_squared15<-data_long_QC_dropped$Age15 * data_long_QC_dropped$Age15
-    data_long_QC_dropped$age_cubed15<-data_long_QC_dropped$age_squared15 * data_long_QC_dropped$Age15
+    #This model has age recentered at 30
+    data_long_QC_dropped$Age30<- data_long_QC_dropped$Age - 30
+    data_long_QC_dropped$age_squared30<-data_long_QC_dropped$Age30 * data_long_QC_dropped$Age30
+    data_long_QC_dropped$age_cubed30<-data_long_QC_dropped$age_squared30 * data_long_QC_dropped$Age30
     
-    fit_age15=lme(CSF_cm~AutismControl + Age15 + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin + age_squared15 + age_cubed15 + age_cubed15*AutismControl + AutismControl*Age15 + AutismControl*age_squared15,random=~1+Age15|SUBJID,
-                 data=data_long_QC_dropped,method="REML", na.action=na.omit)
-    summary(fit_age15)
-    
-    
-    #This model has age re-centered at 25
-    data_long_QC_dropped$Age25<- data_long_QC_dropped$Age - 25
-    data_long_QC_dropped$age_squared25<-data_long_QC_dropped$Age25 * data_long_QC_dropped$Age25
-    data_long_QC_dropped$age_cubed25<-data_long_QC_dropped$age_squared25 * data_long_QC_dropped$Age25
-    
-    fit_age25=lme(CSF_cm~AutismControl + Age25 + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin + age_squared25 + age_cubed25 + age_cubed25*AutismControl + AutismControl*Age25 + AutismControl*age_squared25,random=~1+Age25|SUBJID,
-                 data=data_long_QC_dropped,method="REML", na.action=na.omit)
-    summary(fit_age25)
-    
-    
-    #This model has age re-centered at 35
-    data_long_QC_dropped$Age35<- data_long_QC_dropped$Age - 35 
-    data_long_QC_dropped$age_squared35<-data_long_QC_dropped$Age35 * data_long_QC_dropped$Age35
-    data_long_QC_dropped$age_cubed35<-data_long_QC_dropped$age_squared35 * data_long_QC_dropped$Age35
-    
-    fit_age35=lme(CSF_cm~AutismControl + Age35 + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin + age_squared35 + age_cubed35 + AutismControl*age_cubed35 + AutismControl*Age35 + AutismControl*age_squared35,random=~1+Age35|SUBJID,
-                 data=data_long_QC_dropped,method="REML", na.action=na.omit)
-    summary(fit_age35)
+    fit_age30=lme(CSF_cm~AutismControl + Age30 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared30 + age_cubed30 + age_cubed30*AutismControl + AutismControl*Age30 + AutismControl*age_squared30,random=~1+Age30|SUBJID,
+                  data=data_long_QC_dropped,method="REML", na.action=na.omit)
+    summary(fit_age30)
     
   
     
@@ -1187,7 +1171,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     Palette <- c("#0072B2", "#E69F00")
     ggplot(data_long_QC_dropped, aes(x=Age, y=CSF_cm, color=AutismControl))+
       geom_line(aes(group=Participant))+
-      labs(x = 'Age', y = 'EA-CSF Volume ('~cm^3*')')+
+      labs(x = 'Age', y = 'Extra-axial CSF Volume ( '~cm^3*')')+
       labs(fill = " ")+
       labs(color = " ")+
       scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -1204,60 +1188,55 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
             legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
             axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
     
-    #ggsave(filename = paste("Rev3.2_210514.svg"), width = 4, height = 4,
-    #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+    #ggsave(filename = paste("Rev3.2_210521.svg"), width = 4, height = 4,
+     #      path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
     
     
 #2.2 While the authors did not observe differences in the trajectory of EA-CSF volume change as a whole to control subjects, is there any correlation between EA-CSF and the severity of autism at the time of each scan?    
     # EA-CSF by ADOS CSS corr using scans from the time when CSS scores were collected
-    data_wide_all <- transform(data_wide_all,scan1=ifelse(!is.na(ScanDateT1.Time1),1, 0 ))
-    data_wide_all <- transform(data_wide_all,scan2=ifelse(!is.na(ScanDateT2.Time2),1, 0 ))
-    data_wide_all <- transform(data_wide_all,scan3=ifelse(!is.na(ScanDateT3.Time3),1, 0 ))
-    data_wide_all <- transform(data_wide_all,scan4=ifelse(!is.na(ScanDateT4.Time4),1, 0 ))
-    data_wide_all <- transform(data_wide_all,scan5=ifelse(!is.na(ScanDateT5.Time5),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan1=ifelse(!is.na(ScanDateT1.Time1),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan2=ifelse(!is.na(ScanDateT2.Time2),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan3=ifelse(!is.na(ScanDateT3.Time3),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan4=ifelse(!is.na(ScanDateT4.Time4),1, 0 ))
+    #data_wide_all <- transform(data_wide_all,scan5=ifelse(!is.na(ScanDateT5.Time5),1, 0 ))
     
-    data_wide_all$num_scans <- (data_wide_all$scan1 + data_wide_all$scan2 + data_wide_all$scan3 + data_wide_all$scan4 + data_wide_all$scan5)
-    table(data_wide_all$num_scans, data_wide_all$AutismControl)
+    #data_wide_all$num_scans <- (data_wide_all$scan1 + data_wide_all$scan2 + data_wide_all$scan3 + data_wide_all$scan4 + data_wide_all$scan5)
+    #table(data_wide_all$num_scans, data_wide_all$AutismControl)
     
     #Set up if/else function
-    data_wide_all$new_time1 <- ifelse(data_wide_all$scan1=="1", 1, "")
-    data_wide_all$new_time2 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="1", 2, "")
-    data_wide_all$new_time3 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="1", 3, "")        
-    data_wide_all$new_time4 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="0" & data_wide_all$scan4=="1", 4, "")
-    data_wide_all$new_time5 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="0" & data_wide_all$scan4=="0" & data_wide_all$scan5=="1", 5, "")
-    
-    #Create variable to determine if entry scan matches time point
-    #make time_1digit
-    #data_wide_all$time_1digit <- gsub("^.{0,4}", "", data_wide_all$timepoint)
-
+    #data_wide_all$new_time1 <- ifelse(data_wide_all$scan1=="1", 1, "")
+    #data_wide_all$new_time2 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="1", 2, "")
+    #data_wide_all$new_time3 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="1", 3, "")        
+    #data_wide_all$new_time4 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="0" & data_wide_all$scan4=="1", 4, "")
+    #data_wide_all$new_time5 <- ifelse(data_wide_all$scan1=="0" & data_wide_all$scan2=="0" & data_wide_all$scan3=="0" & data_wide_all$scan4=="0" & data_wide_all$scan5=="1", 5, "")
+ 
     #concatenate new_time vars
-    data_wide_all$time_entry <- (paste0(data_wide_all$new_time1, data_wide_all$new_time2, data_wide_all$new_time3, data_wide_all$new_time4, data_wide_all$new_time5))
-    table(data_wide_all$time_entry)
+    #data_wide_all$time_entry <- (paste0(data_wide_all$new_time1, data_wide_all$new_time2, data_wide_all$new_time3, data_wide_all$new_time4, data_wide_all$new_time5))
+    #table(data_wide_all$time_entry)
     
     #set entry scan to time5 if time5 ADOS was used
-    ADOS_long <- read.csv("C:/Users/maddy/Box/Autism_CSF/data/UofU_Longitudinal_ADOS_CSS_210428.csv") 
-    names(ADOS_long)[1] <- "SUBJID"
+    #ADOS_long <- read.csv("C:/Users/maddy/Box/Autism_CSF/data/UofU_Longitudinal_ADOS_CSS_210428.csv") 
+    #names(ADOS_long)[1] <- "SUBJID"
     #merge with other wide data
-    data_wide_all_ADOS <- merge(ADOS_long, data_wide_all, by =c("SUBJID"), all=FALSE)
-    data_wide_all_ADOS <- subset(data_wide_all_ADOS, sex!=2)
-    data_wide_all_ADOS$ADOS_comb <- ifelse(is.na(data_wide_all_ADOS$TOTAL.CSS) & data_wide_all_ADOS$Time5ADOS.TOTAL.CSS!="NA", data_wide_all_ADOS$Time5ADOS.TOTAL.CSS, data_wide_all_ADOS$TOTAL.CSS)
+    #data_wide_all_ADOS <- merge(ADOS_long, data_wide_all, by =c("SUBJID"), all=FALSE)
+    #data_wide_all_ADOS <- subset(data_wide_all_ADOS, sex!=2)
+    #data_wide_all_ADOS$ADOS_comb <- ifelse(is.na(data_wide_all_ADOS$TOTAL.CSS) & data_wide_all_ADOS$Time5ADOS.TOTAL.CSS!="NA", data_wide_all_ADOS$Time5ADOS.TOTAL.CSS, data_wide_all_ADOS$TOTAL.CSS)
 
-    data_wide_all_ADOS$time_entry <- ifelse(is.na(data_wide_all_ADOS$TOTAL.CSS), "5", data_wide_all_ADOS$time_entry)
-    table(data_wide_all_ADOS$time_entry)
+    #data_wide_all_ADOS$time_entry <- ifelse(is.na(data_wide_all_ADOS$TOTAL.CSS), "5", data_wide_all_ADOS$time_entry)
+    #table(data_wide_all_ADOS$time_entry)
    
     #Entry_CSF
-    data_wide_all_ADOS$entry_CSF <- NA
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="1", data_wide_all_ADOS$CSF_cm.Time1, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="2", data_wide_all_ADOS$CSF_cm.Time2, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="3", data_wide_all_ADOS$CSF_cm.Time3, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="4", data_wide_all_ADOS$CSF_cm.Time4, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="5", data_wide_all_ADOS$CSF_cm.Time5, data_wide_all_ADOS$entry_CSF)
-    data_wide_all_ADOS <- subset(data_wide_all_ADOS, entry_CSF!="NA")
-    data_wide_all_ADOS <- subset(data_wide_all_ADOS, ADOS_comb!="NA")
+    #data_wide_all_ADOS$entry_CSF <- NA
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="1", data_wide_all_ADOS$CSF_cm.Time1, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="2", data_wide_all_ADOS$CSF_cm.Time2, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="3", data_wide_all_ADOS$CSF_cm.Time3, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="4", data_wide_all_ADOS$CSF_cm.Time4, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS$entry_CSF <- ifelse(data_wide_all_ADOS$time_entry=="5", data_wide_all_ADOS$CSF_cm.Time5, data_wide_all_ADOS$entry_CSF)
+    #data_wide_all_ADOS <- subset(data_wide_all_ADOS, entry_CSF!="NA")
+    #data_wide_all_ADOS <- subset(data_wide_all_ADOS, ADOS_comb!="NA")
     
     #Correlation
-    cor.test(data_wide_all_ADOS$entry_CSF, data_wide_all_ADOS$ADOS_comb)
-    
+    #cor.test(data_wide_all_ADOS$entry_CSF, data_wide_all_ADOS$ADOS_comb)
     
     
     
@@ -1305,7 +1284,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     #plot age by CSF
     ggplot(data_long_QC_3scans, aes(x=Age, y=CSF_cm, color=AutismControl))+
       geom_line(aes(group=Participant))+
-      labs(x = "Age (Years)", y = 'EA-CSF Volume ('~cm^3*')')+
+      labs(x = "Age (Years)", y = 'Extra-axial CSF Volume ( '~cm^3*')')+
       labs(fill = " ")+
       labs(color = " ")+
       scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -1323,7 +1302,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
             legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
             axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
     
-    #ggsave(filename = paste("Rev3.3_210514.svg"), width = 4, height = 4,
+    #ggsave(filename = paste("Rev3.3_210521.svg"), width = 4, height = 4,
     #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
     
     
@@ -1354,7 +1333,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     #plot age by CSF
     ggplot(m.data1, aes(x=Age, y=CSF_cm, color=AutismControl))+
       geom_line(aes(group=Participant))+
-      labs(x = "Age (Years)", y = 'EA-CSF Volume ('~cm^3*')')+
+      labs(x = "Age (Years)", y = 'Extra-axial CSF Volume ( '~cm^3*')')+
       labs(fill = " ")+
       labs(color = " ")+
       scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -1372,7 +1351,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
             legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
             axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
     
-    #ggsave(filename = paste("Rev3.4_210514.svg"), width = 4, height = 4,
+    #ggsave(filename = paste("Rev3.4_210521.svg"), width = 4, height = 4,
     #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
     
     # Did the matching reduce the age gap between groups?
@@ -1384,45 +1363,35 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     
     
     
-    #Age-centered analyses
-    #This model has age re-centered at 5
-    data_long_QC_dropped$Age5<- data_long_QC_dropped$Age - 5 
-    data_long_QC_dropped$age_squared5<-data_long_QC_dropped$Age5 * data_long_QC_dropped$Age5
-    data_long_QC_dropped$age_cubed5<-data_long_QC_dropped$age_squared5 * data_long_QC_dropped$Age5
+    #Models with age re-centered  
+    #This model has age recentered at 10
+    data_long_QC_dropped$Age10<- data_long_QC_dropped$Age - 10 
+    data_long_QC_dropped$age_squared10<-data_long_QC_dropped$Age10 * data_long_QC_dropped$Age10
+    data_long_QC_dropped$age_cubed10<-data_long_QC_dropped$age_squared10 * data_long_QC_dropped$Age10
     
-    fit_age5=lme(CSF_cm~AutismControl + Age5 + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin + age_squared5 + age_cubed5 + age_cubed5*AutismControl + AutismControl*Age5 + AutismControl*age_squared5,random=~1+Age5|SUBJID,
-                 data=data_long_QC_dropped,method="REML", na.action=na.omit)
-    summary(fit_age5)
-    
-    
-    #This model has age re-centered at 15
-    data_long_QC_dropped$Age15<- data_long_QC_dropped$Age - 15
-    data_long_QC_dropped$age_squared15<-data_long_QC_dropped$Age15 * data_long_QC_dropped$Age15
-    data_long_QC_dropped$age_cubed15<-data_long_QC_dropped$age_squared15 * data_long_QC_dropped$Age15
-    
-    fit_age15=lme(CSF_cm~AutismControl + Age15 + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin + age_squared15 + age_cubed15 + age_cubed15*AutismControl + AutismControl*Age15 + AutismControl*age_squared15,random=~1+Age15|SUBJID,
+    fit_age10=lme(CSF_cm~AutismControl + Age10 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared10 + age_cubed10 + AutismControl*age_cubed10 +AutismControl*Age10 + AutismControl*age_squared10,random=~1+Age10|SUBJID,
                   data=data_long_QC_dropped,method="REML", na.action=na.omit)
-    summary(fit_age15)
+    summary(fit_age10)
     
+    #This model has age recentered at 20
+    data_long_QC_dropped$Age20<- data_long_QC_dropped$Age - 20
+    data_long_QC_dropped$age_squared20<-data_long_QC_dropped$Age20 * data_long_QC_dropped$Age20
+    data_long_QC_dropped$age_cubed20<-data_long_QC_dropped$age_squared20 * data_long_QC_dropped$Age20
     
-    #This model has age re-centered at 25
-    data_long_QC_dropped$Age25<- data_long_QC_dropped$Age - 25 
-    data_long_QC_dropped$age_squared25<-data_long_QC_dropped$Age25 * data_long_QC_dropped$Age25
-    data_long_QC_dropped$age_cubed25<-data_long_QC_dropped$age_squared25 * data_long_QC_dropped$Age25
-    
-    fit_age25=lme(CSF_cm~AutismControl + Age25 + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin + age_squared25 + age_cubed25 + age_cubed25*AutismControl + AutismControl*Age25 + AutismControl*age_squared25,random=~1+Age25|SUBJID,
+    fit_age20=lme(CSF_cm~AutismControl + Age20 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared20 +age_cubed20 + AutismControl*age_cubed20+ AutismControl*Age20 + AutismControl*age_squared20,random=~1+Age20|SUBJID,
                   data=data_long_QC_dropped,method="REML", na.action=na.omit)
-    summary(fit_age25)
+    summary(fit_age20)
     
     
-    #This model has age re-centered at 35
-    data_long_QC_dropped$Age35<- data_long_QC_dropped$Age - 35
-    data_long_QC_dropped$age_squared35<-data_long_QC_dropped$Age35 * data_long_QC_dropped$Age35
-    data_long_QC_dropped$age_cubed35<-data_long_QC_dropped$age_squared35 * data_long_QC_dropped$Age35
+    #This model has age recentered at 30
+    data_long_QC_dropped$Age30<- data_long_QC_dropped$Age - 30
+    data_long_QC_dropped$age_squared30<-data_long_QC_dropped$Age30 * data_long_QC_dropped$Age30
+    data_long_QC_dropped$age_cubed30<-data_long_QC_dropped$age_squared30 * data_long_QC_dropped$Age30
     
-    fit_age35=lme(CSF_cm~AutismControl + Age35 + TBV_mc +TBV_squared_mc+ QC_Maddy_MID02 + time_bin + age_squared35 + age_cubed35 + age_cubed35*AutismControl + AutismControl*Age35 + AutismControl*age_squared35,random=~1+Age35|SUBJID,
+    fit_age30=lme(CSF_cm~AutismControl + Age30 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared30 + age_cubed30 + age_cubed30*AutismControl + AutismControl*Age30 + AutismControl*age_squared30,random=~1+Age30|SUBJID,
                   data=data_long_QC_dropped,method="REML", na.action=na.omit)
-    summary(fit_age35)
+    summary(fit_age30)
+    
     
     
     
@@ -1467,7 +1436,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     #TBV by CSF plot
     ggplot(data_long_QC_dropped, aes(x=CSF_cm, y=TBV_cm, color=AutismControl))+
       geom_line(aes(group=Participant))+
-      labs(x = 'Extra-axial CSF ('~cm^3*')', y = 'Total Brain Volume ('~cm^3*')')+
+      labs(x = 'Extra-axial CSF ( '~cm^3*')', y = 'Total Brain Volume ('~cm^3*')')+
       labs(fill = " ")+
       labs(color = " ")+
       scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -1485,7 +1454,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
             legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
             axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
     
-    #ggsave(filename = paste("Rev3.6_210514.svg"), width = 4, height = 4,
+    #ggsave(filename = paste("Rev3.6_210521.svg"), width = 4, height = 4,
     #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
     
     
@@ -1805,28 +1774,29 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     data_long_QC_aparc2 <- subset(data_long_QC_aparc2, totalmean_CT!="NA")
     
     # 1. Model 
-    fitC.1 <- lme(totalmean_CT~time_bin+QC_Maddy_MID02, 
+    fitC.1 <- lme(totalmean_CT~time_bin+QC_Maddy_MID02+AutismControl+TBV_mc+TBV_squared_mc, 
                   random=~1|SUBJID,data= data_long_QC_aparc2, method="REML")
     summary(fitC.1)
     
     # 2. Adjust CT for headcoil
     data_long_QC_aparc2$time_bin <- as.numeric(data_long_QC_aparc2$time_bin)
-    data_long_QC_aparc2$CT_adjusted <- data_long_QC_aparc2$totalmean_CT - ((-0.1544946*(data_long_QC_aparc2$time_bin - 0)) + (-0.0355170*(data_long_QC_aparc2$QC_Maddy_MID02)))
+    data_long_QC_aparc2$CT_adjusted <- data_long_QC_aparc2$totalmean_CT - ((-0.1348748*(data_long_QC_aparc2$time_bin - 0)) + (-0.0359074*(data_long_QC_aparc2$QC_Maddy_MID02 - mean(data_long_QC_dropped$QC_Maddy_MID02))) + (0.0003482*(data_long_QC_dropped$TBV_mc - mean(data_long_QC_dropped$TBV_mc))) + (-0.0000001*(data_long_QC_dropped$TBV_squared_mc - mean(data_long_QC_dropped$TBV_squared_mc))))
     #mean shifted check
     mean(data_long_QC_aparc2$CT_adjusted)
     mean(data_long_QC_aparc2$totalmean_CT)
        # Adjust EA-CSF for heacoil, qc
-    fitC.2 <- lme(CSF_cm~CT_adjusted + QC_Maddy_MID02 + time_bin, 
+    fitC.2 <- lme(CSF_cm~CT_adjusted + QC_Maddy_MID02 + time_bin + AutismControl + TBV_mc + TBV_squared_mc, 
                   random=~1|SUBJID,data= data_long_QC_aparc2, method="REML")
     summary(fitC.2)
     data_long_QC_aparc2$time_bin <- as.numeric(data_long_QC_aparc2$time_bin)
-    data_long_QC_aparc2$CSF_adjusted <- data_long_QC_aparc2$CSF_cm - ((20.83618*(data_long_QC_aparc2$time_bin - 0)) + (7.82799*(data_long_QC_aparc2$QC_Maddy_MID02 - 0.9498861)))
+    data_long_QC_aparc2$CSF_adjusted <- data_long_QC_aparc2$CSF_cm - ((21.92174*(data_long_QC_aparc2$time_bin - 0)) + (5.64254*(data_long_QC_aparc2$QC_Maddy_MID02 - mean(data_long_QC_dropped$QC_Maddy_MID02))) + (0.03056*(data_long_QC_dropped$TBV_mc - mean(data_long_QC_dropped$TBV_mc))) + (0.00011*(data_long_QC_dropped$TBV_squared_mc - mean(data_long_QC_dropped$TBV_squared_mc))))
+
     #mean shifted check
     mean(data_long_QC_aparc2$CSF_adjusted)
     mean(data_long_QC_aparc2$CSF_cm)
     
     # 3. Model with adjusted CT values
-    fitC.3 <- lme(CSF_adjusted~CT_adjusted + QC_Maddy_MID02 + time_bin, 
+    fitC.3 <- lme(CSF_adjusted~CT_adjusted + QC_Maddy_MID02 + time_bin + AutismControl + TBV_mc + TBV_squared_mc, 
                   random=~1|SUBJID,data= data_long_QC_aparc2, method="REML")
     summary(fitC.3)
     
@@ -1836,7 +1806,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     Palette <- c("#0072B2", "#E69F00")
     ggplot(data_long_QC_aparc2, aes(x=Age, y=CT_adjusted, color=AutismControl))+
       geom_line(aes(group=Participant))+
-      labs(x = "Age (Years)", y = 'Headcoil-Adjusted Total Mean Cortical Thickness')+
+      labs(x = "Age (Years)", y = 'Adjusted Total Mean Cortical Thickness')+
       labs(fill = " ")+
       labs(color = " ")+
       scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -1854,20 +1824,20 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
             axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
     
     #ggsave(filename = paste("Figure4.A_CT_age_small_210510.png"), width = 3.4, height = 3.4,
-      #   path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+     #  path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
     
     #Plot Total Mean Cortical Thickness by EA-CSF
-    ggplot(data_long_QC_aparc2, aes(x=CSF_adjusted, y=CT_adjusted, color=AutismControl))+
+    ggplot(data_long_QC_aparc2, aes(x=CT_adjusted, y=CSF_adjusted, color=AutismControl))+
       geom_line(aes(group=Participant))+
-      labs(x = 'Adjusted Extra-axial CSF ('~cm^3*')', y = 'Adjusted Total Mean Cortical Thickness')+
+      labs(x = 'Adjusted Total Mean Cortical Thickness', y = 'Adjusted Extra-axial CSF ('~cm^3*')')+
       labs(fill = " ")+
       labs(color = " ")+
       scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
       scale_fill_manual(values=Palette, labels = c("Autism", "Control"))+
       geom_point(aes(fill=AutismControl), colour="black", pch=21, cex=1)+
       geom_smooth(method=loess, aes(fill=AutismControl), se=TRUE) +
-      scale_y_continuous(limits=c(2.25, 3.25))+
-      scale_x_continuous(limits=c(0,140), expand = c(0,0))+
+      scale_y_continuous(limits=c(0,140))+
+      scale_x_continuous(limits=c(2.25,3.25), expand = c(0,0))+
       guides(color=guide_legend(override.aes=list(fill=NA)))+
       theme_bw()+
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
@@ -1908,6 +1878,49 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     table(data_long_QC_dropped$AutismControl)
     table(data_wide_all$AutismControl)
 
+    
+  #LVCP numbers
+    #Subset dataset to only include participants with avg FIQ score
+    which( colnames(data_wide_all)=="FIQ.Time1" )
+    which( colnames(data_wide_all)=="FIQ.Time2" )
+    which( colnames(data_wide_all)=="FIQ.Time3" )
+    which( colnames(data_wide_all)=="FIQ.Time4" )
+    which( colnames(data_wide_all)=="FIQ.Time5" )
+    data_wide_all$FIQ.Time1 <- as.numeric(data_wide_all$FIQ.Time1)
+    data_wide_all$FIQ.Time2 <- as.numeric(data_wide_all$FIQ.Time2)
+    data_wide_all$FIQ.Time3 <- as.numeric(data_wide_all$FIQ.Time3)
+    data_wide_all$FIQ.Time4 <- as.numeric(data_wide_all$FIQ.Time4)
+    data_wide_all$FIQ.Time5 <- as.numeric(data_wide_all$FIQ.Time5)
+    data_wide_all$fiq_avg <- rowMeans(data_wide_all[,c(261,663,395,529,127)], na.rm=TRUE)
+    
+    data_wide_all_FIQ <- subset(data_wide_all, fiq_avg!="NA")
+    data_wide_all_FIQ$fiq_avg <- as.numeric(data_wide_all_FIQ$fiq_avg)
+    data_wide_all_FIQ$LVCP <- ifelse(data_wide_all_FIQ$fiq_avg <= 79, "1", "0")
+    #Number of participants with LVCP/HVCP
+    table(data_wide_all_FIQ$LVCP, data_wide_all_FIQ$AutismControl)
+    #Number of scans for LVCP and HVCP individuals
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan1=ifelse(!is.na(ScanDateT1.Time1),1, 0 ))
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan2=ifelse(!is.na(ScanDateT2.Time2),1, 0 ))
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan3=ifelse(!is.na(ScanDateT3.Time3),1, 0 ))
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan4=ifelse(!is.na(ScanDateT4.Time4),1, 0 ))
+    data_wide_all_FIQ <- transform(data_wide_all_FIQ,scan5=ifelse(!is.na(ScanDateT5.Time5),1, 0 ))
+    data_wide_all_FIQ$num_scans <- (data_wide_all_FIQ$scan1 + data_wide_all_FIQ$scan2 + data_wide_all_FIQ$scan3 + data_wide_all_FIQ$scan4 + data_wide_all_FIQ$scan5)
+    data_wide_all_LVCP <- subset(data_wide_all_FIQ, LVCP=="1")
+    data_wide_all_LVCP_ASD <- subset(data_wide_all_LVCP, AutismControl=="autism")
+    data_wide_all_LVCP_TD <- subset(data_wide_all_LVCP, AutismControl=="control")
+      #LVCP #s
+      sum(data_wide_all_LVCP_ASD$num_scans)  
+      sum(data_wide_all_LVCP_TD$num_scans)
+    
+    data_wide_all_HVCP <- subset(data_wide_all_FIQ, LVCP=="0")
+    data_wide_all_HVCP_ASD <- subset(data_wide_all_HVCP, AutismControl=="autism")
+    data_wide_all_HVCP_TD <- subset(data_wide_all_HVCP, AutismControl=="control")
+      #HVCP #s
+    sum(data_wide_all_HVCP_ASD$num_scans)  
+    sum(data_wide_all_HVCP_TD$num_scans)
+    
+    
+    
     #Number of individuals with each number of scan
     data_wide_all <- transform(data_wide_all,scan1=ifelse(!is.na(ScanDateT1.Time1),1, 0 ))
     data_wide_all <- transform(data_wide_all,scan2=ifelse(!is.na(ScanDateT2.Time2),1, 0 ))
@@ -1949,7 +1962,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
       data_wide_all$FIQ.Time3 <- as.numeric(data_wide_all$FIQ.Time3)
       data_wide_all$FIQ.Time4 <- as.numeric(data_wide_all$FIQ.Time4)
       data_wide_all$FIQ.Time5 <- as.numeric(data_wide_all$FIQ.Time5)
-      data_wide_all$fiq_avg <- rowMeans(data_wide_all[,c(263,665,397,531,129)], na.rm=TRUE)
+      data_wide_all$fiq_avg <- rowMeans(data_wide_all[,c(261,663,395,529,127)], na.rm=TRUE)
       
       which( colnames(data_wide_all)=="PIQ.Time1" )
       which( colnames(data_wide_all)=="PIQ.Time2" )
@@ -2055,7 +2068,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
       
       Palette <- c("#0072B2", "#E69F00")
       ggplot(MPR1_MPR2, aes(x=MPR1_cm, y=MPR2_cm))+
-        labs(x = 'Session 1 EA-CSF Volume ('~cm^3*')', y = 'Session 2 EA-CSF Volume ('~cm^3*')')+
+        labs(x = 'Session 1 Extra-axial CSF Volume ('~cm^3*')', y = 'Session 2 Extra-axial CSF Volume ('~cm^3*')')+
         scale_colour_manual(values=Palette)+
         scale_fill_manual(values=Palette)+
         geom_smooth(aes(colour="007282"), method = "lm", size=1, se = FALSE)+ 
@@ -2069,7 +2082,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
       
-      #ggsave(filename = paste("Figure2_210513.svg"), width = 3.4, height = 3.4,
+      #ggsave(filename = paste("Figure2_210513.png"), width = 3.4, height = 3.4,
       #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
       
   #Visual QC
@@ -2124,12 +2137,12 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
       summary(fit_age30)
       
       
-    #Figure 3: EA-CSF by Age
+    #Figure 3: EA-CSF by Age (RAW values)
       Palette <- c("#0072B2", "#E69F00")
       #plot age by CSF
       ggplot(data_long_QC_dropped, aes(x=Age, y=CSF_cm, color=AutismControl))+
         geom_line(aes(group=Participant))+
-        labs(x = "Age (Years)", y = 'EA-CSF Volume ('~cm^3*')')+
+        labs(x = "Age (Years)", y = 'Extra-axial CSF Volume ('~cm^3*')')+
         labs(fill = " ")+
         labs(color = " ")+
         scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -2146,8 +2159,94 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
       
-      #ggsave(filename = paste("Figure3_QC_small_210428.svg"), width = 3.4, height = 3.4,
+      #ggsave(filename = paste("Figure3_QC_small_210428.png"), width = 3.4, height = 3.4,
       #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      
+      
+      #Model-adjusted plots: FIGURE 3
+      #1. Run model
+      fitC <- lme(CSF_cm~AutismControl + age_mc + QC_Maddy_MID02 +TBV_mc + TBV_squared_mc + time_bin+ age_squared_mc +age_cubed_mc + age_cubed_mc*AutismControl + AutismControl*age_mc + age_squared_mc*AutismControl, 
+                  random=~1+age_mc|SUBJID,data= data_long_QC_dropped, method="REML")
+      summary(fitC)
+      
+      #2. Manually adjust for headcoil, TBV, TBV2, and QC MID02 
+      data_long_QC_dropped$time_bin <- as.numeric(data_long_QC_dropped$time_bin)
+      data_long_QC_dropped$CSF_adjusted <- data_long_QC_dropped$CSF_cm - ((2.83314*(data_long_QC_dropped$time_bin - 0)) + (0.43070*(data_long_QC_dropped$QC_Maddy_MID02 - mean(data_long_QC_dropped$QC_Maddy_MID02))) + (0.00355*(data_long_QC_dropped$TBV_mc - mean(data_long_QC_dropped$TBV_mc))) + (0.00010*(data_long_QC_dropped$TBV_squared_mc - mean(data_long_QC_dropped$TBV_squared_mc))))
+      #mean shifted check
+      mean(data_long_QC_dropped$CSF_adjusted)
+      mean(data_long_QC_dropped$CSF_cm)
+      
+      #3. Plot manually adjusted CSF values (sanity check)
+      Palette <- c("#0072B2", "#E69F00")
+      ggplot(data_long_QC_dropped, aes(x=Age, y=CSF_adjusted, color=AutismControl))+
+        geom_line(aes(group=Participant))+
+        labs(x = "Age (Years)", y = 'Adjusted Extra-axial CSF Volume ('~cm^3*')')+
+        labs(fill = " ")+
+        labs(color = " ")+
+        scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
+        scale_fill_manual(values=Palette, labels = c("Autism", "Control"))+
+        geom_point(aes(fill=AutismControl), colour="black", pch=21, cex=1)+
+        geom_smooth(method=loess, aes(fill=AutismControl), se=TRUE) +
+        scale_y_continuous(limits=c(0,150))+
+        scale_x_continuous(limits=c(0,43), expand = c(0,0))+
+        guides(color=guide_legend(override.aes=list(fill=NA)))+
+        theme(panel.grid.major = element_line(color = "black"))+
+        theme(axis.title = element_text(colour = "black", size=9), axis.text.y =element_text(colour = "black", angle = 90, hjust = 0.6), 
+              axis.text.x =element_text(colour = "black"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+              legend.position = c(.9, .2), legend.title=element_text(colour = "black", size = 9), legend.text=element_text(colour = "black", size = 8), 
+              legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
+      
+      #4. Re-run model based on headcoil-adjusted values
+      fitC2 <- lme(CSF_adjusted~AutismControl +QC_Maddy_MID02 +TBV_mc + TBV_squared_mc + time_bin+ age_mc + age_squared_mc +age_cubed_mc + age_cubed_mc*AutismControl + AutismControl*age_mc + age_squared_mc*AutismControl, 
+                   random=~1+age_mc|SUBJID,data= data_long_QC_dropped, method="REML")
+      summary(fitC2)
+      
+      #5. Plot head-coil adjusted values and model fit lines
+      ggplot(data_long_QC_dropped, aes(x=Age, y=CSF_adjusted, color=AutismControl))+
+        geom_line(aes(group=Participant))+
+        labs(x = "Age (Years)", y = 'Adjusted Extra-axial CSF Volume ('~cm^3*')')+
+        labs(fill = " ")+
+        labs(color = " ")+
+        scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
+        scale_fill_manual(values=Palette, labels = c("Autism", "Control"))+
+        geom_point(aes(fill=AutismControl), colour="black", pch=21, cex=1)+
+        geom_line(data=data_long_QC_dropped, aes(y=predict(fitC2,level=0), group=AutismControl, colour=AutismControl), size = 1.5)+
+        scale_y_continuous(limits=c(0,150))+
+        scale_x_continuous(limits=c(0,43), expand = c(0,0))+
+        guides(color=guide_legend(override.aes=list(fill=NA)))+
+        theme_bw()+
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+        theme(axis.title = element_text(colour = "black", size=9), axis.text.y =element_text(colour = "black", angle = 90, hjust = 0.6), 
+              axis.text.x =element_text(colour = "black"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+              legend.position = c(.9, .2), legend.title=element_text(colour = "black", size = 9), legend.text=element_text(colour = "black", size = 9), 
+              legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
+    
+      
+      #Using loess smoother
+      ggplot(data_long_QC_dropped, aes(x=Age, y=CSF_adjusted, color=AutismControl))+
+        geom_line(aes(group=Participant))+
+        labs(x = "Age (Years)", y = 'Adjusted Extra-axial CSF Volume ('~cm^3*')')+
+        labs(fill = " ")+
+        labs(color = " ")+
+        scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
+        scale_fill_manual(values=Palette, labels = c("Autism", "Control"))+
+        geom_point(aes(fill=AutismControl), colour="black", pch=21, cex=1)+
+        geom_smooth(method=loess, aes(fill=AutismControl), se=TRUE) +
+        scale_y_continuous(limits=c(0,150))+
+        scale_x_continuous(limits=c(0,43), expand = c(0,0))+
+        guides(color=guide_legend(override.aes=list(fill=NA)))+
+        theme_bw()+
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+        theme(axis.title = element_text(colour = "black", size=9), axis.text.y =element_text(colour = "black", angle = 90, hjust = 0.6), 
+              axis.text.x =element_text(colour = "black"), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+              legend.position = c(.9, .2), legend.title=element_text(colour = "black", size = 9), legend.text=element_text(colour = "black", size = 9), 
+              legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
+              axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
+      #ggsave(filename = paste("Figure3_model_adjusted_210522.png"), width = 3.4, height = 3.4,
+      #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      
       
       
       
@@ -2184,33 +2283,34 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
       data_long_QC_aparc2 <- subset(data_long_QC_aparc2, totalmean_CT!="NA")
       
       # 1. Model 
-      fitC.1 <- lme(totalmean_CT~time_bin+QC_Maddy_MID02, 
+      fitC.1 <- lme(totalmean_CT~time_bin+QC_Maddy_MID02+AutismControl+TBV_mc+TBV_squared_mc, 
                     random=~1|SUBJID,data= data_long_QC_aparc2, method="REML")
       summary(fitC.1)
       
       # 2. Adjust CT for headcoil
       data_long_QC_aparc2$time_bin <- as.numeric(data_long_QC_aparc2$time_bin)
-      data_long_QC_aparc2$CT_adjusted <- data_long_QC_aparc2$totalmean_CT - ((-0.1544946*(data_long_QC_aparc2$time_bin - 0)) + (-0.0355170*(data_long_QC_aparc2$QC_Maddy_MID02)))
+      data_long_QC_aparc2$CT_adjusted <- data_long_QC_aparc2$totalmean_CT - ((-0.1348748*(data_long_QC_aparc2$time_bin - 0)) + (-0.0359074*(data_long_QC_aparc2$QC_Maddy_MID02 - mean(data_long_QC_dropped$QC_Maddy_MID02))) + (0.0003482*(data_long_QC_dropped$TBV_mc - mean(data_long_QC_dropped$TBV_mc))) + (-0.0000001*(data_long_QC_dropped$TBV_squared_mc - mean(data_long_QC_dropped$TBV_squared_mc))))
       #mean shifted check
       mean(data_long_QC_aparc2$CT_adjusted)
       mean(data_long_QC_aparc2$totalmean_CT)
-      #2.5 Adjust EA-CSF for heacoil, qc
-      fitC.2 <- lme(CSF_cm~CT_adjusted + QC_Maddy_MID02 + time_bin, 
+      # Adjust EA-CSF for heacoil, qc
+      fitC.2 <- lme(CSF_cm~CT_adjusted + QC_Maddy_MID02 + time_bin + AutismControl + TBV_mc + TBV_squared_mc, 
                     random=~1|SUBJID,data= data_long_QC_aparc2, method="REML")
       summary(fitC.2)
       data_long_QC_aparc2$time_bin <- as.numeric(data_long_QC_aparc2$time_bin)
-      data_long_QC_aparc2$CSF_adjusted <- data_long_QC_aparc2$CSF_cm - ((20.83618*(data_long_QC_aparc2$time_bin - 0)) + (7.82799*(data_long_QC_aparc2$QC_Maddy_MID02 - 0.9498861)))
+      data_long_QC_aparc2$CSF_adjusted <- data_long_QC_aparc2$CSF_cm - ((21.92174*(data_long_QC_aparc2$time_bin - 0)) + (5.64254*(data_long_QC_aparc2$QC_Maddy_MID02 - mean(data_long_QC_dropped$QC_Maddy_MID02))) + (0.03056*(data_long_QC_dropped$TBV_mc - mean(data_long_QC_dropped$TBV_mc))) + (0.00011*(data_long_QC_dropped$TBV_squared_mc - mean(data_long_QC_dropped$TBV_squared_mc))))
+      
       #mean shifted check
       mean(data_long_QC_aparc2$CSF_adjusted)
       mean(data_long_QC_aparc2$CSF_cm)
       
-      # 3. Model with adjusted CSF & CT values
-      fitC.3 <- lme(CSF_adjusted~CT_adjusted + QC_Maddy_MID02 + time_bin, 
+      # 3. Model with adjusted CT values
+      fitC.3 <- lme(CSF_adjusted~CT_adjusted + QC_Maddy_MID02 + time_bin + AutismControl + TBV_mc + TBV_squared_mc, 
                     random=~1|SUBJID,data= data_long_QC_aparc2, method="REML")
       summary(fitC.3)
       
       # 4. Plots using adjusted CT values
-      #Figure 4A Plot Total Mean Cortical Thickness by Age
+      #Plot Total Mean Cortical Thickness by Age
       Palette <- c("#0072B2", "#E69F00")
       ggplot(data_long_QC_aparc2, aes(x=Age, y=CT_adjusted, color=AutismControl))+
         geom_line(aes(group=Participant))+
@@ -2231,21 +2331,22 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.background = element_rect(fill="white", size=0.4) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
       
-      #ggsave(filename = paste("Figure4.A_CT_age_small_210510.svg"), width = 3.4, height = 3.4,
-      #   path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      #ggsave(filename = paste("Figure4.A_CT_age_small_210510.png"), width = 3.4, height = 3.4,
+      #  path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
       
-      #Figure 4B: Plot Total Mean Cortical Thickness by EA-CSF
-      ggplot(data_long_QC_aparc2, aes(x=CSF_adjusted, y=CT_adjusted, color=AutismControl))+
+      
+      #Plot Total Mean Cortical Thickness by EA-CSF
+      ggplot(data_long_QC_aparc2, aes(x=CT_adjusted, y=CSF_adjusted, color=AutismControl))+
         geom_line(aes(group=Participant))+
-        labs(x = 'Adjusted Extra-axial CSF ('~cm^3*')', y = 'Adjusted Total Mean Cortical Thickness')+
+        labs(x = 'Adjusted Total Mean Cortical Thickness', y = 'Adjusted Extra-axial CSF ('~cm^3*')')+
         labs(fill = " ")+
         labs(color = " ")+
         scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
         scale_fill_manual(values=Palette, labels = c("Autism", "Control"))+
         geom_point(aes(fill=AutismControl), colour="black", pch=21, cex=1)+
         geom_smooth(method=loess, aes(fill=AutismControl), se=TRUE) +
-        scale_y_continuous(limits=c(2.25, 3.25))+
-        scale_x_continuous(limits=c(0,140), expand = c(0,0))+
+        scale_y_continuous(limits=c(0,140))+
+        scale_x_continuous(limits=c(2.25,3.25), expand = c(0,0))+
         guides(color=guide_legend(override.aes=list(fill=NA)))+
         theme_bw()+
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
@@ -2255,7 +2356,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.background = element_rect(fill="white", size=0.4) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
       
-      #ggsave(filename = paste("Figure4.B_CT_small_210510.svg"), width = 3.4, height = 3.4,
+      #ggsave(filename = paste("Figure4.B_CT_small_210510.png"), width = 3.4, height = 3.4,
       #   path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
       
       
