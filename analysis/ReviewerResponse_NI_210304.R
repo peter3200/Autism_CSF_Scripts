@@ -203,7 +203,7 @@ data_wide_all_QC <- reshape(data_long_QC,
 
 
 
-#----------------------------------REVIEWER 1---------------------------------------
+#----------------------------------REVIEWER 1: ROUND ONE---------------------------------------
 
 #The mean age of the groups were adults, is this actually a developmental study or a study of adults?
   # Summary statistics
@@ -962,7 +962,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     
 
     
-#-----------------------------REVIEWER 2---------------------------------------------
+#-----------------------------REVIEWER 2: ROUND ONE---------------------------------------------
 
 #1. The final sample comprised of 101 individuals with ASD (4 females) and 98 TD individuals (5 females). How was this imbalance in sex distribution controlled? Can the authors perform the analysis using only male sample? 
     #Sub-analysis with males only 
@@ -1062,7 +1062,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     
     
     
-#-----------------------------------REVIEWER 3---------------------------------------       
+#-----------------------------------REVIEWER 3: ROUND ONE---------------------------------------       
     
     
 #1.1 In addition, some manual segmentation in a subset of the scans should be included to help evaluate the quality of the analysis, by comparing pipeline analysis values to manual segmentation values in both autistic group and typical developing group.    
@@ -1457,7 +1457,40 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     #ggsave(filename = paste("Rev3.6_210521.svg"), width = 4, height = 4,
     #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
     
+
+#--------------------------------------REVIEWER 1: ROUND TWO------------------------------
+
+#1. FROM RESPONSE. Sub-analysis with subjects who have a QC rating of zero?
+    # Number of scans in both groups with QC rating of 0
+    data_long_QC_zero <- subset(data_long_QC_dropped, QC_Maddy_MID02=="0")
+    table(data_long_QC_zero$AutismControl) #ASD = 18, TD = 4
     
+    # Number of scans in both groups with QC rating of 1
+    data_long_QC_one <- subset(data_long_QC_dropped, QC_Maddy_MID02=="1")
+    table(data_long_QC_one$AutismControl)
+    
+    # Run the main model using subset with QC rating of 1 scans
+    fit_one <- lme(CSF_cm~AutismControl + age_mc + TBV_mc + TBV_squared_mc + time_bin+ age_squared_mc + age_cubed_mc + age_cubed_mc*AutismControl + AutismControl*age_mc + age_squared_mc*AutismControl, 
+                random=~1+age_mc|SUBJID,data= data_long_QC_one, method="ML")
+    summary(fit_one)
+    
+    
+    
+#2. FROM RESPONSE. Sub-analysis with subjects 3-8 years old
+    # Number of subjects in this subset
+    data_long_QC_child <- subset(data_long_QC_dropped, Age<9) #46 scans
+    favstats(data_long_QC_child$Age)
+    table(data_long_QC_child$AutismControl)
+    
+    # Re-center age at 4
+    data_long_QC_dropped$Age4<- data_long_QC_dropped$Age - 4 
+    data_long_QC_dropped$age_squared4<-data_long_QC_dropped$Age4 * data_long_QC_dropped$Age4
+    data_long_QC_dropped$age_cubed4<-data_long_QC_dropped$age_squared4 * data_long_QC_dropped$Age4
+    
+    fit_age4=lme(CSF_cm~AutismControl + Age4 + QC_Maddy_MID02 + TBV_mc +TBV_squared_mc+ time_bin + age_squared4 + age_cubed4 + age_cubed4*AutismControl + AutismControl*Age4 + AutismControl*age_squared4,random=~1+Age4|SUBJID,
+                  data=data_long_QC_dropped,method="REML", na.action=na.omit)
+    summary(fit_age4)
+        
     
 #--------------------------------------OTHER----------------------------------------------
 
@@ -1868,6 +1901,15 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
     #Number of scans and ASD/TD participants
     table(data_long_QC_dropped$AutismControl)
     table(data_wide_all$AutismControl)
+    
+    #Single versus multiple scan for ADOS score (ASD severity)
+    #Dummy variable for single scan versus multiple scans
+    data_long_QC_dropped$single_scan <- ifelse(data_long_QC_dropped$num_scans == "1", "1", "0")
+    #subset to participants with ADOS
+    data_long_QC_ADOS <- subset(data_long_QC_dropped, ADOS_comb!="NA")
+    #MLM
+    fitsingle = lme(ADOS_comb~single_scan, random=~1 |SUBJID,data= data_long_QC_ADOS, method="REML")
+    summary(fitsingle)
     
 #Method    
     #Original number of scans
