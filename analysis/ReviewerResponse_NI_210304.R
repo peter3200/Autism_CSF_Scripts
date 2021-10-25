@@ -2130,7 +2130,14 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
       
       #Calculate ICC on HCP test-retest data
       library(psych) 
-      MPR1_MPR2$SUBJID <- NULL #Remove this column so it can calculate ICC between MPR1 and MPR2 sessions
+      #import data
+      MPR1_MPR2 <- read_excel("C:/Users/maddy/Box/Autism_CSF/Auto_EACSF_Pipeline/test_retest_1.7.7_studyparams/Comparison_MPR1_MPR2.xlsx")
+      #rename vars
+      names(MPR1_MPR2) <- c("SUBJID", "MPR1", "MPR2")
+      MPR1_MPR2$MPR1_cm <- MPR1_MPR2$MPR1/1000
+      MPR1_MPR2$MPR2_cm <- MPR1_MPR2$MPR2/1000
+      MPR1_MPR2$SUBJID <- NULL #Remove this column so it can calculate the ICC between MPR1 and MPR2 sessions
+      
       ICC(MPR1_MPR2) #ICC3 was reported in publication
       
       
