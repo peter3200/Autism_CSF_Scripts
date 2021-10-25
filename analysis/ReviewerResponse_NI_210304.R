@@ -2095,8 +2095,8 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
       
-      #ggsave(filename = paste("Figure1_QC_210323.svg"), width = 3.35, height = 5,
-      #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      #ggsave(filename = paste("Figure1_210713.pdf"), width = 3.35, height = 5,
+      #       path = "C:/Users/maddy/Box/Autism_CSF/figures/pdf_format_210713", dpi = 300)
       
       
   # FIGURE 2 HCP TEST-RETEST 
@@ -2124,8 +2124,16 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
       
-      #ggsave(filename = paste("Figure2_210513.png"), width = 3.4, height = 3.4,
-      #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      #ggsave(filename = paste("Figure2_210713.pdf"), width = 3.4, height = 3.4,
+      #       path = "C:/Users/maddy/Box/Autism_CSF/figures/pdf_format_210713", dpi = 300)
+      
+      
+      #Calculate ICC on HCP test-retest data
+      library(psych) 
+      MPR1_MPR2$SUBJID <- NULL #Remove this column so it can calculate ICC between MPR1 and MPR2 sessions
+      ICC(MPR1_MPR2) #ICC3 was reported in publication
+      
+      
       
   #Visual QC
       #Original number of scans
@@ -2286,8 +2294,8 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.position = c(.9, .2), legend.title=element_text(colour = "black", size = 9), legend.text=element_text(colour = "black", size = 9), 
               legend.background = element_rect(fill="white", size=0.5) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
-      #ggsave(filename = paste("Figure3_model_adjusted_210522.png"), width = 3.4, height = 3.4,
-      #       path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      #ggsave(filename = paste("Figure3_model_adjusted.pdf"), width = 3.4, height = 3.4,
+      #       path = "C:/Users/maddy/Box/Autism_CSF/figures/pdf_format_210713", dpi = 300)
       
       
       
@@ -2356,7 +2364,7 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
       Palette <- c("#0072B2", "#E69F00")
       ggplot(data_long_QC_aparc2, aes(x=Age, y=CT_adjusted, color=AutismControl))+
         geom_line(aes(group=Participant))+
-        labs(x = "Age (Years)", y = 'Adjusted Total Mean Cortical Thickness')+
+        labs(x = "Age (Years)", y = 'Adjusted Total Mean Cortical Thickness (mm)')+
         labs(fill = " ")+
         labs(color = " ")+
         scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -2373,14 +2381,14 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.background = element_rect(fill="white", size=0.4) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
       
-      #ggsave(filename = paste("Figure4.A_CT_age_small_210510.png"), width = 3.4, height = 3.4,
-      #  path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      #ggsave(filename = paste("Figure4.A_CT_age_210713.pdf"), width = 3.4, height = 3.4,
+      #  path = "C:/Users/maddy/Box/Autism_CSF/figures/pdf_format_210713", dpi = 300)
       
       
       #Plot Total Mean Cortical Thickness by EA-CSF
       ggplot(data_long_QC_aparc2, aes(x=CT_adjusted, y=CSF_adjusted, color=AutismControl))+
         geom_line(aes(group=Participant))+
-        labs(x = 'Adjusted Total Mean Cortical Thickness', y = 'Adjusted Extra-axial CSF ('~cm^3*')')+
+        labs(x = 'Adjusted Total Mean Cortical Thickness (mm)', y = 'Adjusted Extra-axial CSF ('~cm^3*')')+
         labs(fill = " ")+
         labs(color = " ")+
         scale_colour_manual(values=Palette, labels = c("Autism", "Control"))+
@@ -2398,8 +2406,8 @@ favstats(Age ~ AutismControl, data=data_long_QC_dropped)
               legend.background = element_rect(fill="white", size=0.4) , axis.line = element_line(colour = "black", size = 1, linetype = "solid"), 
               axis.ticks = element_line(colour = "black", size =1, linetype ="solid"), panel.border = element_blank(), panel.background = element_blank())
       
-      #ggsave(filename = paste("Figure4.B_CT_small_210510.png"), width = 3.4, height = 3.4,
-      #   path = "C:/Users/maddy/Box/Autism_CSF/figures", dpi = 300)
+      #ggsave(filename = paste("Figure4.B_CT_210713.pdf"), width = 3.4, height = 3.4,
+      #   path = "C:/Users/maddy/Box/Autism_CSF/figures/pdf_format_210713", dpi = 300)
       
       
       
